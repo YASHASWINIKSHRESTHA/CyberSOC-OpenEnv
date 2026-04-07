@@ -19,35 +19,17 @@ import uuid
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Domain enums & constants
-# ─────────────────────────────────────────────────────────────────────────────
-
-class Severity(str, Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
-    CRITICAL = "CRITICAL"
-
-class AlertStatus(str, Enum):
-    NEW = "NEW"
-    INVESTIGATING = "INVESTIGATING"
-    ESCALATED = "ESCALATED"
-    RESOLVED = "RESOLVED"
-    FALSE_POSITIVE = "FALSE_POSITIVE"
-
-class ActionType(str, Enum):
-    TRIAGE = "triage"
-    INVESTIGATE = "investigate"
-    ESCALATE = "escalate"
-    CONTAIN = "contain"
-    RESOLVE = "resolve"
-    QUERY_LOGS = "query_logs"
-    WRITE_REPORT = "write_report"
-    MARK_FALSE_POSITIVE = "mark_false_positive"
+from models import (
+    Severity,
+    AlertStatus,
+    ActionType,
+    CyberSOCAction,
+    AlertObservation,
+    CyberSOCObservation,
+    CyberSOCReward,
+    CyberSOCState,
+    StepResult,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,77 +161,7 @@ LOG_DATABASE: Dict[str, Dict] = {alert["id"]: alert["log_hints"] for alert in AL
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Pydantic models — Action / Observation / Reward / State
-# ─────────────────────────────────────────────────────────────────────────────
-
-class CyberSOCAction(BaseModel):
-    """Action an agent can take in the CyberSOC environment."""
-    action_type: ActionType = Field(..., description="Type of SOC action to perform")
-    alert_id: str = Field(..., description="Target alert ID (e.g. 'ALT-001')")
-    severity_assessment: Optional[Severity] = Field(None, description="Agent's severity assessment (for triage)")
-    log_query: Optional[str] = Field(None, description="Log field to query (for query_logs)")
-    report_text: Optional[str] = Field(None, description="Incident report content (for write_report)")
-    reasoning: Optional[str] = Field(None, description="Agent's reasoning for this action")
-
-
-class AlertObservation(BaseModel):
-    alert_id: str
-    title: str
-    description: str
-    source_ip: Optional[str]
-    dest_ip: Optional[str]
-    severity: Severity
-    status: AlertStatus
-    mitre_technique: Optional[str]
-    available_actions: List[str]
-    log_data: Optional[Dict[str, str]] = None
-    analyst_notes: List[str] = Field(default_factory=list)
-
-
-class CyberSOCObservation(BaseModel):
-    """Full observation returned after each step."""
-    active_alerts: List[AlertObservation]
-    current_alert_id: Optional[str]
-    step_result: str
-    action_feedback: str
-    threat_intel: Optional[str]
-    metrics: Dict[str, Any]
-    queue_depth: int
-    shift_time_remaining: int
-
-
-class CyberSOCReward(BaseModel):
-    """Structured reward breakdown."""
-    total: float
-    triage_accuracy: float
-    investigation_depth: float
-    response_speed: float
-    false_positive_penalty: float
-    escalation_correctness: float
-    report_quality: float
-
-
-class CyberSOCState(BaseModel):
-    """Full internal state (returned by state())."""
-    episode_id: str
-    task_name: str
-    step: int
-    max_steps: int
-    alerts: Dict[str, Any]
-    resolved_alerts: List[str]
-    false_positives_marked: List[str]
-    escalated_alerts: List[str]
-    contained_alerts: List[str]
-    actions_taken: List[Dict]
-    cumulative_reward: float
-    done: bool
-
-
-class StepResult(BaseModel):
-    observation: CyberSOCObservation
-    reward: float
-    done: bool
-    info: Dict[str, Any]
+# Models are now in models.py
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -329,9 +241,12 @@ class CyberSOCEnv:
                 "actions_taken": [],
                 "analyst_notes": [],
                 "log_queried": False,
+                "timestamp": f"2024-04-07T14:{random.randint(10,59)}:00Z"
             }
 
         self._alerts_data = alerts
+        self._randomize_alerts()  # 🎲 Top Tier: Procedural Variance
+
         self._state = CyberSOCState(
             episode_id=episode_id,
             task_name=self.task_name,
@@ -400,8 +315,9 @@ class CyberSOCEnv:
     def score(self) -> float:
         """Compute normalized final score [0.0, 1.0]."""
         if self._state is None:
-            return 0.0
-        return self._compute_final_score()
+            return 0.0001  # Minimum score even if not started
+        score = self._compute_final_score()
+        return round(min(max(score, 0.0001), 0.9999), 4)
 
     # ── Action Execution ───────────────────────────────────────────────────
 
@@ -549,21 +465,42 @@ class CyberSOCEnv:
             step_result = f"MARK_FP → {alert_id}"
             alert["actions_taken"].append(ActionType.MARK_FALSE_POSITIVE)
 
+        # ⏳ Top Tier: Efficiency Policy (-0.01 per step penalty)
+        reward -= 0.01
+        self._state.cumulative_reward += reward
+        
         return reward, feedback, step_result, error
+
+    def _randomize_alerts(self):
+        """Inject randomized IOCs and logs per episode to increase variance."""
+        for alert in self._alerts_data.values():
+            if alert["source_ip"]:
+                parts = alert["source_ip"].split(".")
+                parts[-1] = str(random.randint(1, 254))
+                alert["source_ip"] = ".".join(parts)
+            if alert["ioc"]:
+                # Keep the same pattern but change specific IP/domain if it looks like one
+                if "." in alert["ioc"] and not alert["ioc"].endswith(".com"):
+                    parts = alert["ioc"].split(".")
+                    parts[-1] = str(random.randint(1, 254))
+                    alert["ioc"] = ".".join(parts)
 
     # ── Scoring & Done ─────────────────────────────────────────────────────
 
     def _check_done(self) -> bool:
         if self._state.step >= self._state.max_steps:
             return True
-        # All alerts resolved or FP-marked (RESOLVED includes contained)
-        # Only auto-done when agent explicitly resolves or FP-marks all alerts
-        all_terminal = all(
-            a["status"] in [AlertStatus.FALSE_POSITIVE]
-            or (a["status"] == AlertStatus.RESOLVED and ActionType.RESOLVE in a["actions_taken"])
-            for a in self._alerts_data.values()
-        )
-        return all_terminal
+        # 🏁 Episode Boundary Fix: Smarter termination
+        # All TP alerts are contained & escalated/resolved, all FP alerts are marked FP
+        finished_alerts = 0
+        for alert in self._alerts_data.values():
+            if alert["true_positive"]:
+                is_handled = (alert["status"] in [AlertStatus.RESOLVED, AlertStatus.ESCALATED]) or (ActionType.CONTAIN in alert["actions_taken"])
+                if is_handled: finished_alerts += 1
+            else:
+                if alert["status"] == AlertStatus.FALSE_POSITIVE: finished_alerts += 1
+        
+        return finished_alerts == len(self._alerts_data)
 
     def _compute_final_score(self) -> float:
         total_possible = 0.0
@@ -589,7 +526,8 @@ class CyberSOCEnv:
                 total_earned -= 1.0
 
         raw = total_earned / max(total_possible, 1.0)
-        return round(min(max(raw, 0.0), 1.0), 4)
+        # 🔗 Scoring Range Fix: Ensure score is strictly in (0, 1) per OpenEnv Phase 2 specs
+        return round(min(max(raw, 0.0001), 0.9999), 4)
 
     def _score_report(self, report: str, alert: dict) -> float:
         """Score report quality based on key elements present."""
@@ -604,7 +542,15 @@ class CyberSOCEnv:
             score += 0.15
         if alert.get("attack_type") and alert["attack_type"].lower() in report_lower:
             score += 0.15
-        keywords = ["timeline", "remediation", "impact", "affected", "recommend", "action"]
+        
+        # 🛡️ Top Tier: Context-aware keywords
+        mandatory_for_hard = ["remediation", "timeline", "impact", "root cause"]
+        if self.task_name == "hard":
+            for kw in mandatory_for_hard:
+                if kw in report_lower: score += 0.05
+            if len(report) < 200: score *= 0.8 # Penalty for short reports on hard tasks
+        
+        keywords = ["affected", "recommend", "action", "investigation"]
         found = sum(1 for k in keywords if k in report_lower)
         score += min(found / len(keywords), 0.5)
         return round(min(score, 1.0), 3)

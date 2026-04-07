@@ -30,5 +30,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 7860
 
-# Start server
-CMD ["python", "-m", "server.app"]
+# Build assets and start
+RUN python -c "from cyber_soc_env import ALERT_LIBRARY; print(f'Loaded {len(ALERT_LIBRARY)} alerts.')"
+
+# Switch to uvicorn for more reliable Space pings
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]

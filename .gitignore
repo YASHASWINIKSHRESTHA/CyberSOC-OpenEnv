@@ -4,3 +4,6 @@ uv.lock
 validate_output*.txt
 index.html
 outputs/
+
+.venv/
+.env
