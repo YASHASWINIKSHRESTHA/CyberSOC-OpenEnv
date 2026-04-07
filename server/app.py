@@ -79,7 +79,9 @@ async def health():
 @app.get("/")
 async def root():
     # Serve the UI HTML file
-    with open("static/index.html", "r", encoding="utf-8") as f:
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    index_path = os.path.join(base_dir, "static", "index.html")
+    with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
     return HTMLResponse(content=html, media_type="text/html")
 
