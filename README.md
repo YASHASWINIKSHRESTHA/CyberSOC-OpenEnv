@@ -19,7 +19,7 @@ An AI agent acts as a **Tier-1 SOC Analyst** — triaging security alerts, inves
 
 [![OpenEnv](https://img.shields.io/badge/OpenEnv-Compliant-00d4ff?style=flat-square)](https://openenv.org)
 [![Tasks](https://img.shields.io/badge/Tasks-3%20(Easy%20→%20Hard)-green?style=flat-square)](#tasks)
-[![HF Space](https://img.shields.io/badge/HuggingFace-Space-yellow?style=flat-square)](https://huggingface.co/spaces)
+[![HF Space](https://img.shields.io/badge/HuggingFace-Space-yellow?style=flat-square)](https://huggingface.co/spaces/ykshrestha/CyberSOC-OpenEnv)
 
 ---
 
