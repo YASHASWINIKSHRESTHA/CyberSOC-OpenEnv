@@ -13,8 +13,11 @@ from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+# app.mount("/static", StaticFiles(directory="static"), name="static")  # moved below app definition
 from pydantic import BaseModel
 
 from cyber_soc_env import (
@@ -31,6 +34,8 @@ app = FastAPI(
     description="Cybersecurity SOC Incident Response — OpenEnv compatible environment",
     version="1.0.0",
 )
+# Mount static files directory for UI assets
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
