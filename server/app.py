@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from pydantic import BaseModel
 
 from cyber_soc_env import (
@@ -73,7 +73,7 @@ async def health():
 
 @app.get("/")
 async def root():
-    return {"message": "CyberSOC-OpenEnv", "docs": "/docs", "tasks": VALID_TASKS}
+    return FileResponse("index.html")
 
 @app.post("/reset")
 async def reset(req: ResetRequest):
