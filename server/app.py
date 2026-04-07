@@ -88,7 +88,7 @@ async def root():
     return HTMLResponse(content=html, media_type="text/html")
 
 @app.post("/reset")
-async def reset(req: ResetRequest):
+async def reset(req: ResetRequest = ResetRequest()):
     if req.task not in VALID_TASKS:
         raise HTTPException(400, f"Invalid task '{req.task}'. Choose from: {VALID_TASKS}")
     env = CyberSOCEnv(task=req.task, seed=req.seed)
