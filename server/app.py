@@ -77,6 +77,8 @@ async def health():
     return {"status": "ok", "env": "CyberSOC-OpenEnv", "version": "1.0.0"}
 
 @app.get("/")
+@app.get("/web")
+@app.get("/web/")
 async def root():
     # Serve the UI HTML file
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
