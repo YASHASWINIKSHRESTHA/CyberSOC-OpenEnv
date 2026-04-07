@@ -74,7 +74,7 @@ async def health():
 @app.get("/")
 async def root():
     # Serve the UI HTML file
-    with open("index.html", "r", encoding="utf-8") as f:
+    with open("static/index.html", "r", encoding="utf-8") as f:
         html = f.read()
     return HTMLResponse(content=html, media_type="text/html")
 
