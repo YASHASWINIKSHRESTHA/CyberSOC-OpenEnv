@@ -1,0 +1,4 @@
+[FAIL] files (6): Not ready for multi-mode deployment
+
+Issues found:
+  - Missing pyproject.toml

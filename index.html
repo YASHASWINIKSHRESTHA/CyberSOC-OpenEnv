@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CyberSOC-OpenEnv | AI Security Operations Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #030712;
+    --panel: rgba(17, 24, 39, 0.65);
+    --border: rgba(255, 255, 255, 0.08);
+    --border2: rgba(0, 212, 255, 0.3);
+    --cyan: #00f0ff;
+    --green: #10ff98;
+    --red: #ff3366;
+    --amber: #ffb800;
+    --purple: #bf55ff;
+    --text: #ffffff;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; background: var(--bg); }
+
+  body {
+    font-family: var(--font-display);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    padding-bottom: 80px;
+  }
+
+  /* ── Liquid Animated Background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle 800px at 10% 20%, rgba(0, 240, 255, 0.06), transparent),
+      radial-gradient(circle 600px at 90% 80%, rgba(191, 85, 255, 0.05), transparent),
+      radial-gradient(circle 1000px at 50% 50%, rgba(16, 255, 152, 0.03), transparent);
+    pointer-events: none; z-index: -2;
+    animation: liquidBg 15s ease-in-out infinite alternate;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.03)"/></svg>');
+    pointer-events: none; z-index: -1;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 40%, transparent 100%);
+  }
+
+  @keyframes liquidBg {
+    0% { transform: scale(1) translate(0, 0); }
+    100% { transform: scale(1.1) translate(2%, -2%); }
+  }
+
+  /* ── Bento Grid 2.0 Layout ── */
+  .bento-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 350px;
+    grid-template-rows: auto auto auto auto;
+    gap: 20px;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 30px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ── Liquid Glassmorphism Cards ── */
+  .bento-card {
+    background: var(--panel);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    box-shadow: 
+      inset 0 1px 1px rgba(255,255,255,0.15), 
+      inset 0 -1px 1px rgba(0,0,0,0.4), 
+      0 12px 32px rgba(0,0,0,0.5);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 28px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bento-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    pointer-events: none;
+  }
+
+  .bento-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 
+      inset 0 1px 1px rgba(255,255,255,0.2), 
+      0 20px 40px rgba(0, 240, 255, 0.08);
+    border-color: rgba(0, 240, 255, 0.2);
+  }
+
+  /* ── Grid Areas ── */
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-end; padding: 20px 10px 40px; flex-wrap: wrap; gap: 20px; }
+  .m1 { grid-column: 1; }
+  .m2 { grid-column: 2; }
+  .m3 { grid-column: 3; }
+  .m4 { grid-column: 4; }
+  .alert-queue-wrap { grid-column: 1 / span 4; }
+  .terminal-wrap { grid-column: 1 / span 4; }
+  .mitre-wrap { grid-column: 1 / span 4; }
+
+  .right-col {
+    grid-column: 5;
+    grid-row: 2 / span 4;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Header & Kinetic Typography ── */
+  .env-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 100px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+    margin-bottom: 20px; transition: background 0.3s; cursor: default;
+  }
+  .env-badge:hover { background: rgba(0,240,255,0.1); }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: pulse 2s infinite; }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(38px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    background: linear-gradient(to right, var(--cyan), var(--purple), var(--cyan));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: textFlow 6s linear infinite, slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    letter-spacing: -0.04em;
+    transition: letter-spacing 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: default;
+  }
+  h1:hover { letter-spacing: -0.01em; }
+  h1 .sub { display: block; font-size: 16px; color: var(--text2); background: none; -webkit-text-fill-color: var(--text2); font-weight: 500; letter-spacing: 0; margin-top: 8px; }
+
+  @keyframes textFlow { to { background-position: 200% center; } }
+  
+  .live-clock { font-family: var(--font-mono); font-size: 24px; color: var(--text); font-weight: 700; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+
+  /* ── Tactile Squishy Elements ── */
+  .squishy {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+  }
+  .squishy:active {
+    transform: scale(0.94) perspective(400px) rotateX(4deg) !important;
+    box-shadow: inset 0 8px 16px rgba(0,0,0,0.5) !important;
+  }
+
+  /* ── Metrics ── */
+  .metric-card {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .metric-icon { font-size: 24px; margin-bottom: 16px; display: inline-block; filter: drop-shadow(0 0 10px currentColor); }
+  .metric-val {
+    font-size: 42px; font-weight: 800; line-height: 1; margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff, #aaa); -webkit-background-clip: text; color: transparent;
+  }
+  .metric-val.colored { background: var(--accent); -webkit-background-clip: text; color: transparent; filter: drop-shadow(0 0 16px var(--accent-glow)); }
+  .metric-lbl { font-family: var(--font-mono); font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* ── Section Titles ── */
+  .section-label {
+    font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text3);
+    margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+  }
+  .section-label::before { content:''; height: 1px; width: 24px; background: var(--cyan); opacity: 0.5; }
+
+  /* ── Task Ribbon Buttons (Tactile) ── */
+  .task-btn {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    padding: 18px; border-radius: 20px; cursor: pointer; color: var(--text);
+    text-align: left; margin-bottom: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .task-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+  .task-btn.active {
+    background: linear-gradient(135deg, rgba(0,240,255,0.15), rgba(0,240,255,0.05));
+    border-color: rgba(0,240,255,0.4); box-shadow: inset 0 1px 1px rgba(255,255,255,0.2), 0 8px 24px rgba(0,240,255,0.15);
+  }
+  .tb-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .tb-desc { font-family: var(--font-mono); font-size: 11px; color: var(--text2); }
+  .diff-pill { padding: 4px 10px; border-radius: 100px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; background: rgba(0,255,152,0.1); color: var(--green); }
+  .diff-pill.medium { background: rgba(255,184,0,0.1); color: var(--amber); }
+  .diff-pill.hard { background: rgba(255,51,102,0.1); color: var(--red); }
+
+  /* ── Alert Queue ── */
+  .alert-queue-wrap { padding-right: 10px; }
+  .alert-item {
+    display: flex; gap: 16px; padding: 20px; background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border); border-radius: 24px; margin-bottom: 12px;
+    cursor: pointer; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .alert-item:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.1); transform: translateY(-2px); }
+  .alert-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; box-shadow: 0 0 12px currentColor; }
+  .alert-info { flex: 1; }
+  .al-id { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .al-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .al-meta { display: flex; gap: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text2); flex-wrap: wrap; }
+  .al-meta .ip { color: var(--cyan); }
+  .al-meta .badge { padding: 2px 8px; border-radius: 6px; background: rgba(191,85,255,0.15); color: var(--purple); }
+  
+  .sev-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 8px; height: fit-content; }
+
+  /* ── Kinetic Score Ring ── */
+  .score-wrap { display: flex; justify-content: center; align-items: center; position: relative; margin: 20px 0 40px; }
+  .score-ring { transform: rotate(-90deg); filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.2)); }
+  .score-bg { fill: none; stroke: rgba(255,255,255,0.05); }
+  .score-fill { fill: none; stroke: url(#scoreGrad); stroke-linecap: round; transition: stroke-dashoffset 2s cubic-bezier(0.16, 1, 0.3, 1); }
+  .score-text { position: absolute; text-align: center; }
+  .score-pct { font-size: 42px; font-weight: 800; background: linear-gradient(135deg, white, var(--cyan)); -webkit-background-clip: text; color: transparent; animation: pulseText 3s infinite alternate; }
+  
+  /* ── Terminal & Controls ── */
+  .controls { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  select, .run-btn {
+    padding: 12px 18px; border-radius: 16px; font-family: var(--font-mono); font-size: 12px;
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text); outline: none;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.05); cursor: pointer; transition: all 0.2s;
+  }
+  select:hover { border-color: var(--cyan); }
+  
+  .run-btn { background: var(--cyan); color: #000; font-weight: 700; border: none; box-shadow: 0 4px 16px rgba(0,240,255,0.3); }
+  .run-btn:hover { background: #33f3ff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,240,255,0.4); }
+  .run-btn.reset { background: transparent; color: var(--red); border: 1px solid rgba(255,51,102,0.3); box-shadow: none; }
+  .run-btn.reset:hover { background: rgba(255,51,102,0.1); border-color: var(--red); box-shadow: 0 8px 24px rgba(255,51,102,0.2); }
+
+  .terminal {
+    background: #020610; border-radius: 20px; padding: 24px; font-family: var(--font-mono); font-size: 13px;
+    height: 250px; overflow-y: auto; color: var(--text2); line-height: 1.6;
+    box-shadow: inset 0 4px 20px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.03);
+  }
+  .terminal::-webkit-scrollbar { width: 6px; }
+  .terminal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  .t-cmd { color: var(--cyan); }
+  .t-alert { color: var(--amber); }
+  .t-success { color: var(--green); }
+  .t-cursor { display: inline-block; width: 8px; height: 16px; background: var(--cyan); animation: blink 1s step-end infinite; vertical-align: text-bottom; margin-left: 4px; }
+
+  /* ── MITRE ── */
+  .mitre-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .mitre-chip {
+    padding: 8px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 14px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--purple); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .mitre-chip:hover { border-color: var(--purple); background: rgba(191,85,255,0.1); }
+  .mitre-chip strong { color: var(--text); }
+
+  /* ── Scrollytelling Animations ── */
+  .scrolly-reveal { opacity: 0; transform: translateY(30px) scale(0.95); transition: opacity 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .scrolly-reveal.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.6; } }
+  @keyframes pulseText { from { filter: drop-shadow(0 0 10px rgba(0,240,255,0.2)); } to { filter: drop-shadow(0 0 20px rgba(0,240,255,0.6)); } }
+
+  /* ── Responsive ── */
+  @media (max-width: 1300px) {
+    .bento-container { grid-template-columns: repeat(2, 1fr); padding: 20px; }
+    .right-col { grid-column: 1 / -1; grid-row: auto; flex-direction: row; flex-wrap: wrap; }
+    .alert-queue-wrap, .terminal-wrap, .mitre-wrap { grid-column: 1 / -1; }
+    .m1, .m2, .m3, .m4 { grid-column: span 1; }
+    .right-col > * { flex: 1; min-width: 300px; }
+  }
+  @media (max-width: 768px) {
+    .bento-container { grid-template-columns: 1fr; }
+    .m1, .m2, .m3, .m4 { grid-column: 1; }
+    h1 { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bento-container">
+  
+  <header class="scrolly-reveal">
+    <div>
+      <div class="env-badge"><span class="badge-dot"></span> OpenEnv · SOC 2026 Edition</div>
+      <h1>CyberSOC-OpenEnv <span class="sub">AI Security Operations Center · Tactical Dashboard</span></h1>
+    </div>
+    <div class="live-clock" id="clock">00:00:00 UTC</div>
+  </header>
+
+  <div class="bento-card m1 scrolly-reveal" style="transition-delay: 0.1s">
+    <span class="metric-icon" style="color:var(--red)">⚠</span>
+    <div>
+      <div class="metric-val" id="m-alerts">6</div>
+      <div class="metric-lbl">Active Alerts</div>
+    </div>
+  </div>
+
+  <div class="bento-card m2 scrolly-reveal" style="transition-delay: 0.2s">
+    <span class="metric-icon" style="color:var(--green)">✓</span>
+    <div>
+      <div class="metric-val" id="m-resolved">0</div>
+      <div class="metric-lbl">Resolved Threats</div>
+    </div>
+  </div>
+
+  <div class="bento-card m3 scrolly-reveal" style="transition-delay: 0.3s">
+    <span class="metric-icon" style="color:var(--amber)">↗</span>
+    <div>
+      <div class="metric-val" id="m-escalated">0</div>
+      <div class="metric-lbl">Escalated Tier-2</div>
+    </div>
+  </div>
+
+  <div class="bento-card m4 scrolly-reveal" style="transition-delay: 0.4s">
+    <span class="metric-icon" style="color:var(--purple)">◈</span>
+    <div>
+      <div class="metric-val" id="m-steps">0</div>
+      <div class="metric-lbl" id="m-steps-delta">Steps: 0 / 25 MAX</div>
+    </div>
+  </div>
+
+  <div class="bento-card alert-queue-wrap scrolly-reveal" style="transition-delay: 0.5s">
+    <div class="section-label">Live Alert Queue</div>
+    <div id="alertList"></div>
+  </div>
+
+  <div class="right-col">
+    <div class="bento-card scrolly-reveal" style="transition-delay: 0.6s">
+      <div class="section-label">Select Task Module</div>
+      <button class="task-btn squishy active" data-task="easy" onclick="selectTask('easy', this)">
+        <div>
+          <div class="tb-name">Easy — FP Triage</div>
+          <div class="tb-desc">2 alerts · 12 steps</div>
+        </div>
+        <span class="diff-pill">EASY</span>
+      </button>
+      <button class="task-btn squishy" data-task="medium" onclick="selectTask('medium', this)">
+        <div>
+          <div class="tb-name">Medium — Phishing</div>
+          <div class="tb-desc">2 alerts · 18 steps</div>
+        </div>
+        <span class="diff-pill medium">MED</span>
+      </button>
+      <button class="task-btn squishy" data-task="hard" onclick="selectTask('hard', this)">
+        <div>
+          <div class="tb-name">Hard — APT Chain</div>
+          <div class="tb-desc">3 alerts · 25 steps</div>
+        </div>
+        <span class="diff-pill hard">HARD</span>
+      </button>
+    </div>
+
+    <div class="bento-card scrolly-reveal" style="transition-delay: 0.7s">
+      <div class="section-label">AI Performance Score</div>
+      <div class="score-wrap">
+        <svg class="score-ring" width="180" height="180" viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00f0ff" />
+              <stop offset="100%" stop-color="#bf55ff" />
+            </linearGradient>
+          </defs>
+          <circle class="score-bg" cx="90" cy="90" r="70" stroke-width="12"/>
+          <circle class="score-fill" id="ringFill" cx="90" cy="90" r="70" stroke-width="12" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+        </svg>
+        <div class="score-text">
+          <div class="score-pct" id="scorePct">0%</div>
+          <div class="metric-lbl" style="margin-top:4px">Overall</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bento-card terminal-wrap scrolly-reveal" style="transition-delay: 0.8s">
+    <div class="section-label">Agent Action Terminal</div>
+    <div class="controls">
+      <select id="actionSelect">
+        <option value="investigate">investigate</option>
+        <option value="query_logs">query_logs</option>
+        <option value="contain">contain</option>
+        <option value="escalate">escalate</option>
+        <option value="mark_false_positive">mark_false_positive</option>
+        <option value="write_report">write_report</option>
+      </select>
+      <select id="alertSelect"></select>
+      <button class="run-btn squishy" onclick="simulateStep()">EXECUTE ACTION</button>
+      <button class="run-btn reset squishy" onclick="resetSim()">RESET ENV</button>
+    </div>
+    <div class="terminal" id="terminal">
+      <div class="t-line">[SYSTEM] Booting CyberSOC Kernel v2026... OK</div>
+      <div class="t-line">$ awaiting agent input<span class="t-cursor"></span></div>
+    </div>
+  </div>
+
+  <div class="bento-card mitre-wrap scrolly-reveal" style="transition-delay: 0.9s">
+    <div class="section-label">MITRE ATT&CK Matrix Traces</div>
+    <div class="mitre-grid" id="mitreGrid"></div>
+  </div>
+
+</div>
+
+<script>
+const ALERTS = [
+  { id:'ALT-001', title:'Suspicious PowerShell Execution', sev:'HIGH', status:'NEW', src:'192.168.10.42', mitre:'T1059.001', attack:'Malware Dropper' },
+  { id:'ALT-002', title:'Multiple Failed SSH Login Attempts', sev:'MEDIUM', status:'NEW', src:'45.33.32.156', mitre:'T1110.001', attack:'Brute Force' },
+  { id:'ALT-003', title:'Antivirus Alert: EICAR Test File', sev:'LOW', status:'NEW', src:'192.168.20.7', mitre:null, attack:'Test/Benign' },
+  { id:'ALT-004', title:'Data Exfiltration: S3 Bucket Access', sev:'CRITICAL', status:'NEW', src:'203.0.113.99', mitre:'T1567.002', attack:'Exfiltration' },
+  { id:'ALT-005', title:'Lateral Movement: Pass-the-Hash', sev:'CRITICAL', status:'NEW', src:'192.168.30.12', mitre:'T1550.002', attack:'Lateral Movement' },
+  { id:'ALT-006', title:'Phishing Email: Credential Harvest', sev:'HIGH', status:'NEW', src:'198.51.100.22', mitre:'T1566.002', attack:'Phishing' },
+];
+
+const MITRE_MAP = [
+  { id:'T1059.001', name:'PowerShell' },
+  { id:'T1110.001', name:'Password Guessing' },
+  { id:'T1567.002', name:'Exfil to Cloud' },
+  { id:'T1550.002', name:'Pass-the-Hash' },
+  { id:'T1566.002', name:'Spearphishing Link' },
+];
+
+const TASK_ALERTS = {
+  easy: ['ALT-002','ALT-003'],
+  medium: ['ALT-001','ALT-006'],
+  hard: ['ALT-001','ALT-004','ALT-005']
+};
+
+let simState = { task: 'easy', step: 0, maxSteps: 12, score: 0, resolved: 0, escalated: 0, alerts: {} };
+ALERTS.forEach(a => simState.alerts[a.id] = 'NEW');
+
+// Intersection Observer for Scrollytelling
+function revealOnScroll() {
+  setTimeout(() => {
+    document.querySelectorAll('.scrolly-reveal').forEach(el => el.classList.add('visible'));
+  }, 100);
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alertList');
+  const ids = TASK_ALERTS[simState.task];
+  const items = ALERTS.filter(a => ids.includes(a.id));
+  
+  list.innerHTML = items.map((a, i) => {
+    const status = simState.alerts[a.id];
+    let col = a.sev==='CRITICAL'?'var(--red)':a.sev==='HIGH'?'var(--amber)':a.sev==='MEDIUM'?'var(--cyan)':'var(--green)';
+    let dotCol = status==='RESOLVED'?'var(--green)':status==='ESCALATED'?'var(--purple)':status==='FALSE_POSITIVE'?'var(--text3)':col;
+    
+    return `
+      <div class="alert-item squishy scrolly-reveal" style="transition-delay: ${i*0.1}s">
+        <div class="alert-dot" style="color: ${dotCol}; background: currentColor"></div>
+        <div class="alert-info">
+          <div class="al-id">${a.id} · status: ${status}</div>
+          <div class="al-title">${a.title}</div>
+          <div class="al-meta">
+            <span class="ip">${a.src}</span>
+            ${a.mitre ? `<span class="badge">${a.mitre}</span>` : ''}
+            <span>${a.attack}</span>
+          </div>
+        </div>
+        <div class="sev-tag" style="background: ${col}20; color: ${col}; border: 1px solid ${col}40">${a.sev}</div>
+      </div>
+    `;
+  }).join('');
+  revealOnScroll();
+}
+
+function renderMITRE() {
+  const grid = document.getElementById('mitreGrid');
+  const ids = TASK_ALERTS[simState.task];
+  const valid = ALERTS.filter(a => ids.includes(a.id) && a.mitre).map(a => a.mitre);
+  
+  grid.innerHTML = MITRE_MAP.filter(m => valid.includes(m.id)).map((m, i) => `
+    <div class="mitre-chip squishy scrolly-reveal" style="transition-delay: ${i*0.1}s">
+      <strong>${m.id}</strong> · ${m.name}
+    </div>
+  `).join('');
+}
+
+function selectTask(task, btn) {
+  document.querySelectorAll('.task-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  simState.task = task;
+  simState.maxSteps = task === 'easy' ? 12 : task === 'medium' ? 18 : 25;
+  resetSim(false);
+  updateSelects();
+  
+  logTerm(`[SYSTEM] Context switched to task=${task}. Max steps: ${simState.maxSteps}`, 't-cmd');
+}
+
+function updateSelects() {
+  const sel = document.getElementById('alertSelect');
+  const ids = TASK_ALERTS[simState.task];
+  sel.innerHTML = ALERTS.filter(a => ids.includes(a.id)).map(a => `<option value="${a.id}">${a.id} - ${a.attack}</option>`).join('');
+}
+
+function updateScore(score) {
+  document.getElementById('scorePct').textContent = Math.round(score * 100) + '%';
+  const offset = 439.8 - (score * 439.8);
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+}
+
+function updateMetrics() {
+  document.getElementById('m-alerts').textContent = TASK_ALERTS[simState.task].length - simState.resolved;
+  document.getElementById('m-resolved').textContent = simState.resolved;
+  document.getElementById('m-escalated').textContent = simState.escalated;
+  document.getElementById('m-steps').textContent = simState.step;
+  document.getElementById('m-steps-delta').textContent = `Steps: ${simState.step} / ${simState.maxSteps} MAX`;
+}
+
+function resetSim(log = true) {
+  simState.step = 0; simState.score = 0; simState.resolved = 0; simState.escalated = 0;
+  Object.keys(simState.alerts).forEach(k => simState.alerts[k] = 'NEW');
+  renderAlerts(); renderMITRE(); updateMetrics(); updateScore(0);
+  if(log) {
+    document.getElementById('terminal').innerHTML = '';
+    logTerm('[SYSTEM] Environment fully reset', 't-cmd');
+  }
+}
+
+function logTerm(text, cls='') {
+  const term = document.getElementById('terminal');
+  const cur = term.querySelector('.t-cursor');
+  if(cur) cur.parentElement.remove();
+  
+  term.innerHTML += `<div class="t-line ${cls}">${text}</div>`;
+  term.innerHTML += `<div class="t-line scrolly-reveal visible">$ awaiting instruction<span class="t-cursor"></span></div>`;
+  term.scrollTop = term.scrollHeight;
+}
+
+function simulateStep() {
+  const action = document.getElementById('actionSelect').value;
+  const aid = document.getElementById('alertSelect').value;
+  
+  simState.step++;
+  let reward = 0;
+  
+  if(action === 'investigate') { simState.alerts[aid] = 'INVESTIGATING'; reward = 0.2; }
+  else if(action === 'contain') { 
+    if(aid==='ALT-003') reward = -0.2; 
+    else { reward = 0.3; simState.alerts[aid] = 'RESOLVED'; simState.resolved++; }
+  }
+  else if(action === 'escalate') {
+    if(['ALT-001','ALT-004','ALT-005'].includes(aid)) { reward = 0.25; simState.alerts[aid] = 'ESCALATED'; simState.escalated++; }
+    else reward = -0.1;
+  }
+  else if(action === 'mark_false_positive') {
+    if(aid==='ALT-003') { reward = 0.3; simState.alerts[aid] = 'FALSE_POSITIVE'; simState.resolved++; }
+    else reward = -0.4;
+  }
+  else reward = 0.1; // filler
+
+  simState.score = Math.min(1.0, Math.max(0, simState.score + (reward * 0.5)));
+  
+  renderAlerts();
+  updateMetrics();
+  updateScore(simState.score);
+  
+  logTerm(`[AGENT] Executed <span class="t-cmd">${action}</span> on <span class="t-alert">${aid}</span>. Reward: ${reward>0?'+':''}${reward}`, 't-success');
+}
+
+setInterval(() => {
+  const d = new Date();
+  document.getElementById('clock').textContent = `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}:${String(d.getUTCSeconds()).padStart(2,'0')} UTC`;
+}, 1000);
+
+// Init
+updateSelects();
+renderAlerts();
+renderMITRE();
+revealOnScroll();
+</script>
+</body>
+</html>

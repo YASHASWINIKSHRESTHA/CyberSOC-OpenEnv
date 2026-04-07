@@ -1,0 +1,7 @@
+[FAIL] files (6): Not ready for multi-mode deployment
+
+Issues found:
+  - Missing uv.lock - run 'uv lock' to generate it
+  - Missing [project.scripts] server entry point
+  - Missing required dependency: openenv-core>=0.2.0 (or openenv>=0.2.0)
+  - Missing server/app.py

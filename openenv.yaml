@@ -1,0 +1,156 @@
+name: CyberSOC-OpenEnv
+version: "1.0.0"
+description: >
+  A real-world Cybersecurity Security Operations Center (SOC) environment.
+  An AI agent acts as a Tier-1 SOC Analyst: triaging security alerts,
+  investigating incidents using log data and threat intelligence, containing
+  threats, escalating critical incidents to Tier-2/CISO, identifying false
+  positives, and writing formal incident reports.
+
+  Simulates the exact daily workflow of enterprise SOC teams globally.
+
+author: CyberSOC-OpenEnv Team
+tags:
+  - openenv
+  - cybersecurity
+  - soc
+  - incident-response
+  - threat-detection
+  - enterprise-ai
+
+tasks:
+  - name: easy
+    description: >
+      Triage 2 alerts: identify the false positive (EICAR test file)
+      and respond to a brute-force SSH attack. Correct FP identification
+      and containment required.
+    difficulty: easy
+    max_steps: 12
+    score_range: [0.0, 1.0]
+    alerts: [ALT-003, ALT-002]
+    success_threshold: 0.6
+
+  - name: medium
+    description: >
+      Investigate a coordinated phishing campaign (34 employees targeted,
+      7 clicked) combined with a malware dropper using encoded PowerShell.
+      Requires investigation, containment, and escalation for both alerts.
+    difficulty: medium
+    max_steps: 18
+    score_range: [0.0, 1.0]
+    alerts: [ALT-006, ALT-001]
+    success_threshold: 0.5
+
+  - name: hard
+    description: >
+      Full APT incident response: data exfiltration via compromised IAM
+      credentials (47GB S3 download), lateral movement via Pass-the-Hash
+      to finance server, and initial PowerShell dropper. Report writing
+      required for all critical alerts.
+    difficulty: hard
+    max_steps: 25
+    score_range: [0.0, 1.0]
+    alerts: [ALT-004, ALT-005, ALT-001]
+    success_threshold: 0.4
+
+action_space:
+  type: structured
+  schema: CyberSOCAction
+  fields:
+    action_type:
+      type: enum
+      values: [triage, investigate, escalate, contain, resolve, query_logs, write_report, mark_false_positive]
+      description: The SOC analyst action to perform
+    alert_id:
+      type: string
+      description: Target alert identifier (e.g. ALT-001)
+    severity_assessment:
+      type: enum
+      values: [LOW, MEDIUM, HIGH, CRITICAL]
+      required: false
+      description: Agent's severity assessment (used during triage)
+    log_query:
+      type: string
+      required: false
+      description: Specific log field to query (auth, network, file, process_tree, etc.)
+    report_text:
+      type: string
+      required: false
+      description: Full incident report text (used with write_report action)
+    reasoning:
+      type: string
+      required: false
+      description: Agent's chain-of-thought reasoning for this action
+
+observation_space:
+  type: structured
+  schema: CyberSOCObservation
+  fields:
+    active_alerts:
+      type: array
+      items: AlertObservation
+      description: All alerts in the current queue with status and metadata
+    current_alert_id:
+      type: string
+      description: The alert currently being worked
+    step_result:
+      type: string
+      description: Human-readable result of the last action
+    action_feedback:
+      type: string
+      description: Detailed feedback on action quality and next steps
+    threat_intel:
+      type: string
+      description: Real-time threat intelligence for current alert IOCs
+    metrics:
+      type: object
+      description: Current episode metrics (step, rewards, resolution rate)
+    queue_depth:
+      type: integer
+      description: Number of NEW (untriaged) alerts remaining
+    shift_time_remaining:
+      type: integer
+      description: Steps remaining in the analyst shift
+
+reward_structure:
+  type: dense
+  range: [-0.25, 0.30]
+  components:
+    - name: triage_accuracy
+      description: Reward for correct severity classification
+      range: [-0.05, 0.15]
+    - name: investigation
+      description: Reward for thorough investigation before action
+      range: [0.0, 0.20]
+    - name: log_querying
+      description: Reward for retrieving and analyzing log data
+      range: [0.0, 0.15]
+    - name: containment
+      description: Reward for correct threat containment; penalty for FP containment
+      range: [-0.20, 0.25]
+    - name: escalation
+      description: Reward for escalating critical alerts; penalty for unnecessary escalation
+      range: [-0.10, 0.20]
+    - name: false_positive_id
+      description: Reward for correctly identifying FP; heavy penalty for missing TP
+      range: [-0.25, 0.30]
+    - name: report_quality
+      description: Reward scaled by report completeness (IOCs, timeline, remediation)
+      range: [0.0, 0.20]
+
+endpoints:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+  score: GET /score
+  tasks: GET /tasks
+  health: GET /health
+
+dependencies:
+  python: ">=3.10"
+  packages:
+    - fastapi>=0.110.0
+    - uvicorn>=0.29.0
+    - pydantic>=2.0.0
+    - openai>=1.0.0
+    - httpx>=0.27.0
