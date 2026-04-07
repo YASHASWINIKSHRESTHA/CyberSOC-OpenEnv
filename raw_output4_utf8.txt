@@ -1,0 +1,31 @@
+﻿STDOUT: Validating OpenEnv environment in C:\Users\YASHASWINI\Downloads\files (6)...
+ΓÜá Recommended directory missing: outputs/
+Γ£ô Found OpenEnv environment: CyberSOC-OpenEnv
+Γ£ô Authenticated as: ykshrestha
+Preparing files for Hugging Face deployment (with web interface)...
+Γ£ô Updated Dockerfile: enabled web interface
+Γ£ô Updated README with HF Space frontmatter
+Creating/verifying space: YASHASWINIKSHRESTHA/CyberSOC-OpenEnv
+ΓÜá Space creation: (Request ID: 
+Root=1-69d4f6ab-1138bd445ff9fd3318e50157;bb162934-748c-4c9f-b691-0b83859c9585)
+
+403 Forbidden: You don't have the rights to create a space under the namespace 
+"YASHASWINIKSHRESTHA".
+Cannot access content at: https://huggingface.co/api/repos/create.
+Make sure your token has the correct permissions.
+Uploading files to YASHASWINIKSHRESTHA/CyberSOC-OpenEnv...
+Γ£ù Upload failed: 404 Client Error. (Request ID: 
+Root=1-69d4f6ac-5dea55fc56d934eb3d84cec4;662e7047-3daa-472a-b28e-d3f1a1c137ef)
+
+Repository Not Found for url: 
+https://huggingface.co/api/spaces/YASHASWINIKSHRESTHA/CyberSOC-OpenEnv/preuploa
+d/main.
+Please make sure you specified the correct `repo_id` and `repo_type`.
+If you are trying to access a private or gated repo, make sure you are 
+authenticated and your token has the required permissions.
+For more details, see 
+https://huggingface.co/docs/huggingface_hub/authentication
+Note: Creating a commit assumes that the repo already exists on the Huggingface
+Hub. Please use `create_repo` if it's not the case.
+
+STDERR: 

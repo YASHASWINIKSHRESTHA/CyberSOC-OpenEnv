@@ -1,0 +1,9 @@
+﻿STDOUT: Validating OpenEnv environment in C:\Users\YASHASWINI\Downloads\files (6)...
+
+STDERR: Usage: openenv push [OPTIONS] [DIRECTORY]
+Try 'openenv push --help' for help.
++- Error ---------------------------------------------------------------------+
+| Invalid value: Invalid OpenEnv environment structure: Required file         |
+| missing: client.py                                                          |
++-----------------------------------------------------------------------------+
+

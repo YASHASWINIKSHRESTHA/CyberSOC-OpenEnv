@@ -1,0 +1,37 @@
+﻿Validating OpenEnv environment in C:\Users\YASHASWINI\Downloads\files (6)...
+openenv : Usage: openenv 
+push [OPTIONS] [DIRECTORY]
+At line:1 char:1
++ openenv push --repo-id Y
+ASHASWINIKSHRESTHA/CyberSO
+C-OpenEnv > push_ou ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (U  
+  sage: openenv ...NS]    
+ [DIRECTORY]:String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+Try 'openenv push --help' 
+for help.
++- Error -----------------
+--------------------------
+--------------------------
++
+| Invalid value: Invalid 
+OpenEnv environment 
+structure: Required file  
+       |
+| missing: __init__.py    
+                          
+                          
+|
++-------------------------
+--------------------------
+--------------------------
++

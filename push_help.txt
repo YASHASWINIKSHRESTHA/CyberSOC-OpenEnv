@@ -1,0 +1,97 @@
+﻿                          
+ Usage: openenv push      
+ [OPTIONS] [DIRECTORY]    
+                          
+ Push an OpenEnv          
+ environment to Hugging   
+ Face Spaces or custom    
+ registry                 
+                          
++- Arguments ------------+
+|   dirà      [DI  Direà |
+|             REC  contà |
+|             TOR  the   |
+|             Y]   Openà |
+|                  envià |
+|                  (defà |
+|                  currà |
+|                  direà |
++------------------------+
++- Options --------------+
+| --rà  -r      TE  Repà |
+|               XT  ID   |
+|                   in   |
+|                   forà |
+|                   'usà |
+|                   (deà |
+|                   to   |
+|                   'usà |
+|                   from |
+|                   opeà |
+| --bà  -b      TE  Base |
+|               XT  Docà |
+|                   imaà |
+|                   to   |
+|                   use  |
+|                   (ovà |
+|                   Docà |
+|                   FROà |
+| --ià              Enaà |
+|                   web  |
+|                   intà |
+|                   (deà |
+|                   True |
+|                   if   |
+|                   no   |
+|                   regà |
+|                   speà |
+| --nà              Disà |
+|                   web  |
+|                   intà |
+| --rà          TE  Cusà |
+|               XT  regà |
+|                   URL  |
+|                   (e.à |
+|                   docà |
+|                   Disà |
+|                   web  |
+|                   intà |
+|                   by   |
+|                   defà |
+| --pà              Depà |
+|                   the  |
+|                   spaà |
+|                   as   |
+|                   prià |
+| --cà              Creà |
+|                   a    |
+|                   Pull |
+|                   Reqà |
+|                   insà |
+|                   of   |
+|                   pusà |
+|                   to   |
+|                   the  |
+|                   defà |
+|                   braà |
+| --eà          TE  Optà |
+|               XT  addà |
+|                   ignà |
+|                   file |
+|                   with |
+|                   newà |
+|                   glob |
+|                   patà |
+|                   to   |
+|                   excà |
+|                   from |
+|                   Hugà |
+|                   Face |
+|                   uplà |
+| --hà              Show |
+|                   this |
+|                   mesà |
+|                   and  |
+|                   exià |
++------------------------+
+

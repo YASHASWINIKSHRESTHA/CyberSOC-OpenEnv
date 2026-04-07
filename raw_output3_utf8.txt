@@ -1,0 +1,4 @@
+﻿STDOUT: Validating OpenEnv environment in C:\Users\YASHASWINI\Downloads\files (6)...
+
+STDERR: Error: 'charmap' codec can't encode character '\u26a0' in position 0: character maps to <undefined>
+
